@@ -48,7 +48,7 @@ def send_email_with_attachment_internal(
     """Send an email
 
     Args:
-        to (str): The email of the recipient
+        to (str): The email of the tos
         title (str): The title of the email
         message (str): The message content of the email
 
@@ -67,7 +67,13 @@ def send_email_with_attachment_internal(
     if signature:
         message += f"\n{signature}"
 
+    # Ajoutez la partie texte simple de votre message
     msg.set_content(message)
+
+    # Ajoutez la partie HTML de votre message
+    html_message = '<html><body>{}</body></html>'.format(message.replace("\n", "<br>"))
+
+    msg.add_alternative(html_message, subtype="html")
 
     if attachment_path:
         ctype, encoding = mimetypes.guess_type(attachment_path)
@@ -185,6 +191,8 @@ def get_email_body(msg: email.message.Message) -> str:
             content_type = part.get_content_type()
             content_disposition = str(part.get("Content-Disposition"))
             if content_type == "text/plain" and "attachment" not in content_disposition:
-                return part.get_payload(decode=True).decode()
+                return part.get_payload(decode=True).decode(errors="replace")
+            if content_type == "text/html" and "attachment" not in content_disposition:
+                return part.get_payload(decode=True).decode(errors="replace")
     else:
-        return msg.get_payload(decode=True).decode()
+        return msg.get_payload(decode=True).decode(errors="replace")
